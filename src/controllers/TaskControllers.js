@@ -38,13 +38,21 @@ const tasks = [
 ]
 
 const getAllTasks = catchAsync (async (req, res, next) =>  {
-  const query = Task.find({});
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 5;
+  const skip = (page - 1) * limit;
+
+  const query = Task.find({}).skip(skip).limit(limit);
   const result = await query.select('-__v'); // Exclude the __v field from the results
+  const total = await Task.countDocuments();
+  const totalPage = Math.ceil(total / limit);
+  const currentPage = page;
 
   res.status(HttpStatusCode.OK).json({
     status: 'success',
-    results: result.length,
-    requestTime: req.requestTime,
+    total: total,
+    totalPage: totalPage,
+    currentPage: currentPage,
     data: {
       tasks: result
     }
